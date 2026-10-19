@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#152a27">
+  <title>{{ title|default('NCAPCheck') }} · NCAPCheck</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+</head>
+<body class="{% if current_user.is_authenticated %}app-body{% else %}auth-body{% endif %}">
+{% if current_user.is_authenticated %}
+<div class="app-shell">
+  <aside class="sidebar">
+    <a class="brand" href="{{ url_for('main.dashboard') }}" aria-label="NCAPCheck dashboard">
+      <span class="brand-mark">N</span>
+      <span><strong>NCAPCheck</strong><small>Metro Manila vehicle watch</small></span>
+    </a>
+    <div class="nav-label">WORKSPACE</div>
+    <nav class="side-nav" aria-label="Main navigation">
+      <a href="{{ url_for('main.dashboard') }}" class="nav-link {% if request.endpoint in ['main.dashboard', 'main.vehicle_detail'] %}active{% endif %}"><span class="nav-icon">▦</span> My vehicles</a>
+      {% if current_user.is_admin %}
+      <a href="{{ url_for('admin.index') }}" class="nav-link {% if request.endpoint and request.endpoint.startswith('admin.') %}active{% endif %}"><span class="nav-icon">⚙</span> Admin panel</a>
+      {% endif %}
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="privacy-mini"><span class="privacy-dot"></span><div><strong>Private by design</strong><small>Plate and MV details are encrypted</small></div></div>
+      <form method="post" action="{{ url_for('auth.logout') }}" class="logout-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="nav-link logout-button"><span class="nav-icon">↗</span> Sign out</button>
+      </form>
+      <div class="sidebar-version">NCAPCheck v{{ config.get('APP_VERSION', '0.1.0') }}</div>
+    </div>
+  </aside>
+  <div class="main-column">
+    <header class="topbar">
+      <div class="topbar-context"><span class="topbar-label">VEHICLE MONITORING</span><span class="topbar-separator">/</span><span>{% if current_user.is_admin %}Administrator{% else %}Personal workspace{% endif %}</span></div>
+      <div class="profile-chip"><span class="avatar">{{ current_user.email[:1]|upper }}</span><span>{{ current_user.email }}</span>{% if current_user.is_admin %}<span class="role-pill">ADMIN</span>{% endif %}</div>
+    </header>
+    <main class="page-content">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}<div class="flash-stack" role="status">{% for category, message in messages %}<div class="flash flash-{{ category }}"><span class="flash-symbol">{% if category == 'error' %}×{% elif category == 'success' %}✓{% else %}i{% endif %}</span><span>{{ message }}</span></div>{% endfor %}</div>{% endif %}
+      {% endwith %}
+      {% block content %}{% endblock %}
+    </main>
+    <footer class="page-footer"><span>NCAPCheck · Personal monitoring only</span><span>Official records are controlled by the issuing authority.</span></footer>
+  </div>
+</div>
+{% else %}
+<div class="auth-wrap">
+  <div class="auth-brand"><span class="brand-mark">N</span><span><strong>NCAPCheck</strong><small>Metro Manila vehicle watch</small></span></div>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}<div class="flash-stack auth-flashes" role="status">{% for category, message in messages %}<div class="flash flash-{{ category }}"><span class="flash-symbol">{% if category == 'error' %}×{% elif category == 'success' %}✓{% else %}i{% endif %}</span><span>{{ message }}</span></div>{% endfor %}</div>{% endif %}
+  {% endwith %}
+  {% block auth_content %}{% endblock %}
+  <div class="auth-legal">This app is independent and is not affiliated with MMDA or any city government.</div>
+</div>
+{% endif %}
+</body>
+</html>

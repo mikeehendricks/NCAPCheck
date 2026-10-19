@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="page-heading">
+  <div><div class="eyebrow">SYSTEM CONTROL <span class="eyebrow-line"></span> ADMIN ONLY</div><h1>Admin panel</h1><p class="page-subtitle">Manage the schedule, registration policy, and controlled app updates.</p></div>
+  <span class="admin-badge"><span></span> Administrator access</span>
+</section>
+<section class="notice notice-warning"><span class="notice-icon">!</span><div><strong>Portal integrations are manual-only</strong><p>The current release does not automate or bypass CAPTCHA, reCAPTCHA, or other authority access controls. Scheduled cycles queue manual review tasks only.</p></div></section>
+<section class="stat-grid admin-stats">
+  <article class="stat-card"><div class="stat-label">USER ACCOUNTS</div><div class="stat-value">{{ user_count }}</div><div class="stat-foot"><span class="stat-dot green"></span>Registered accounts</div></article>
+  <article class="stat-card"><div class="stat-label">SAVED VEHICLES</div><div class="stat-value">{{ vehicle_count }}</div><div class="stat-foot"><span class="stat-dot blue"></span>Encrypted identifiers</div></article>
+  <article class="stat-card"><div class="stat-label">MANUAL REPORTS</div><div class="stat-value">{{ manual_report_count }}</div><div class="stat-foot"><span class="stat-dot amber"></span>User-reported observations</div></article>
+</section>
+<div class="admin-grid">
+  <section class="panel-card">
+    <div class="panel-title-row"><div><div class="eyebrow">SCHEDULING</div><h2>Monitoring policy</h2></div><span class="panel-icon">◷</span></div>
+    <form method="post" action="{{ url_for('admin.save_settings') }}" class="admin-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label for="poll_interval_hours">Review reminder interval</label>
+      <div class="input-suffix"><input id="poll_interval_hours" name="poll_interval_hours" type="number" min="6" max="168" value="{{ poll_interval_hours }}" required><span>hours</span></div>
+      <p class="field-help">Choose 6–168 hours. The worker creates review tasks; it does not query protected portals.</p>
+      <label class="switch-row"><input type="checkbox" name="allow_public_registration" value="yes" {% if registration_open %}checked{% endif %}><span class="switch-visual"></span><span><strong>Allow user registration</strong><small>New users can create standard accounts.</small></span></label>
+      <button class="button button-primary" type="submit">Save policy</button>
+    </form>
+    <div class="worker-status"><span class="worker-dot {% if heartbeat %}online{% else %}offline{% endif %}"></span><div><strong>Scheduler heartbeat</strong><small>{% if heartbeat %}Last worker cycle: {{ heartbeat }} UTC{% else %}No worker heartbeat recorded yet{% endif %}</small></div></div>
+  </section>
+  <section class="panel-card">
+    <div class="panel-title-row"><div><div class="eyebrow">APPLICATION</div><h2>App updates</h2></div><span class="panel-icon">↻</span></div>
+    <div class="version-row"><span>Installed version</span><strong>v{{ current_version }}</strong></div>
+    <p class="field-help">Check the public GitHub Releases page. Applying an update queues the installer-managed systemd updater; it backs up the database, updates the fixed repository branch, runs tests, and restarts services.</p>
+    <form method="post" action="{{ url_for('admin.update_action') }}" class="update-actions">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button button-outline" type="submit" name="action" value="check">Check for updates</button>
+      {% if updates_enabled %}<button class="button button-dark" type="submit" name="action" value="apply" onclick="return confirm('Queue the server updater? The app may restart.');">Apply update</button>{% else %}<button class="button button-disabled" type="button" disabled>Apply update disabled</button>{% endif %}
+    </form>
+    <div class="update-foot">Repository: <a href="https://github.com/{{ github_repo }}" target="_blank" rel="noopener noreferrer">{{ github_repo }} ↗</a></div>
+  </section>
+</div>
+<section class="panel-card providers-admin">
+  <div class="panel-title-row"><div><div class="eyebrow">PROVIDER REGISTRY</div><h2>Official portals</h2><p>Configured for direct user verification only. No credentials or plate data are sent from the scheduler.</p></div><span class="section-count">{{ providers|length }} sources</span></div>
+  <div class="provider-admin-list">{% for provider in providers %}<div class="provider-admin-row"><span class="provider-number">0{{ loop.index }}</span><div><strong>{{ provider.name }}</strong><small>{{ provider.city }} · manual verification</small></div><span class="manual-only-pill">MANUAL ONLY</span><a href="{{ provider.url }}" target="_blank" rel="noopener noreferrer" aria-label="Open {{ provider.name }}">↗</a></div>{% endfor %}</div>
+</section>
+<div class="admin-privacy"><span>🔒</span><p>Administrators see aggregate usage counts only. The app does not expose users’ plate or MV file numbers in the admin panel.</p></div>
+{% endblock %}

@@ -1,0 +1,2 @@
+{% extends 'base.html' %}
+{% block content %}<section class="error-state"><div class="error-code">403</div><h1>Access denied</h1><p>You do not have permission to view this page, or user registration has been disabled.</p><a class="button button-primary" href="{{ url_for('main.dashboard') if current_user.is_authenticated else url_for('auth.login') }}">Return to NCAPCheck</a></section>{% endblock %}

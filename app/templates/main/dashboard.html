@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="page-heading">
+  <div><div class="eyebrow">OVERVIEW <span class="eyebrow-line"></span> {{ current_user.email }}</div><h1>My vehicles</h1><p class="page-subtitle">Keep each vehicle’s portal review status organized in one place.</p></div>
+  <a class="button button-primary" href="#add-vehicle">＋ Add a vehicle</a>
+</section>
+<section class="notice notice-warning" aria-label="Important integration notice">
+  <span class="notice-icon">!</span><div><strong>Portal verification is currently manual</strong><p>These portals use CAPTCHA/reCAPTCHA or restrict automated access. Scheduled cycles create review reminders only—they do not retrieve or verify official violation records.</p></div>
+</section>
+<section class="stat-grid">
+  <article class="stat-card"><div class="stat-label">SAVED VEHICLES</div><div class="stat-value">{{ summaries|length }}</div><div class="stat-foot"><span class="stat-dot green"></span>Encrypted in this app</div></article>
+  <article class="stat-card"><div class="stat-label">PORTALS PER VEHICLE</div><div class="stat-value">{{ provider_count }}</div><div class="stat-foot"><span class="stat-dot blue"></span>Official links available</div></article>
+  <article class="stat-card"><div class="stat-label">NEEDS REVIEW</div><div class="stat-value">{{ pending }}</div><div class="stat-foot"><span class="stat-dot amber"></span>Manual verification required</div></article>
+</section>
+<section class="section-head"><div><h2>Vehicle register</h2><p>Your latest manually reported results and next scheduled review.</p></div><span class="section-count">{{ summaries|length }} total</span></section>
+{% if summaries %}
+<div class="vehicle-list">
+  {% for vehicle, status, status_label in summaries %}
+  <article class="vehicle-card">
+    <div class="vehicle-symbol">▰</div>
+    <div class="vehicle-main"><div class="vehicle-name">{{ vehicle.label or 'My vehicle' }} <span class="plate-tag">{{ vehicle.plate }}</span></div><div class="vehicle-meta">MV ending {{ vehicle.mv_number[-4:] }} · Added {{ vehicle.created_at|manila_time }}</div></div>
+    <div class="vehicle-status"><span class="status-badge status-{{ status }}"><i></i>{{ status_label }}</span><small>{% if vehicle.last_check_at %}Scheduled review {{ vehicle.last_check_at|manila_time }}{% else %}No review cycle yet{% endif %}</small></div>
+    <a href="{{ url_for('main.vehicle_detail', vehicle_id=vehicle.id) }}" class="button button-outline button-small">Open details <span aria-hidden="true">→</span></a>
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state"><div class="empty-icon">▰</div><h3>No vehicles saved yet</h3><p>Add a vehicle you own or are authorized to monitor. The app encrypts its plate and MV file number at rest.</p><a class="button button-primary" href="#add-vehicle">Add your first vehicle</a></div>
+{% endif %}
+<section id="add-vehicle" class="add-vehicle-panel">
+  <div class="section-head add-head"><div><span class="eyebrow">NEW RECORD</span><h2>Add a vehicle</h2><p>Both identifiers are required by the city portals.</p></div><span class="lock-mark">⌑ Encrypted</span></div>
+  <form method="post" action="{{ url_for('main.add_vehicle') }}" class="vehicle-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="field"><label for="label">Vehicle name <span class="label-hint">Optional</span></label><input id="label" name="label" maxlength="60" placeholder="e.g. Family sedan"></div>
+    <div class="field"><label for="plate">Plate number</label><input id="plate" name="plate" maxlength="16" autocomplete="off" placeholder="ABC 1234" required></div>
+    <div class="field"><label for="mv_number">MV file number</label><input id="mv_number" name="mv_number" maxlength="28" autocomplete="off" placeholder="From your LTO Certificate of Registration" required></div>
+    <label class="consent-line"><input type="checkbox" name="authorization_ack" value="yes" required><span>I own this vehicle or am authorized by its owner to monitor these identifiers.</span></label>
+    <div class="form-actions"><button class="button button-primary" type="submit">Save vehicle <span aria-hidden="true">→</span></button><span class="field-footnote">Identifiers are encrypted before they are stored.</span></div>
+  </form>
+</section>
+<section class="bottom-info"><span class="info-round">i</span><p><strong>About scheduled checks</strong> A review cycle runs every {{ interval_hours }} hours by default. Because the official portals require interactive verification, each cycle flags the sources for review instead of claiming a live violation result.</p><a href="https://www.lawphil.net/statutes/repacts/ra2012/ra_10173_2012.html" target="_blank" rel="noopener noreferrer">Data privacy basics ↗</a></section>
+{% endblock %}

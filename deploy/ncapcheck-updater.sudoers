@@ -1,0 +1,2 @@
+# Exact command only: the web process cannot run arbitrary commands as root.
+ncapcheck ALL=(root) NOPASSWD: /usr/bin/systemctl start ncapcheck-update.service

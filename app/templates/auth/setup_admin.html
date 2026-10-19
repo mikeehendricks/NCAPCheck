@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block auth_content %}
+<section class="auth-card">
+  <div class="auth-kicker">ONE-TIME SERVER SETUP</div>
+  <h1>Register the administrator</h1>
+  <p class="auth-intro">Create the first administrator account. This setup page closes permanently after a successful registration.</p>
+  <form method="post" class="form-stack">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="setup_token">One-time setup token</label>
+    <input id="setup_token" name="setup_token" type="password" autocomplete="off" required>
+    <label for="email">Administrator email</label>
+    <input id="email" name="email" type="email" autocomplete="email" required maxlength="254">
+    <label for="password">Password <span class="label-hint">12+ characters</span></label>
+    <input id="password" name="password" type="password" autocomplete="new-password" minlength="12" required>
+    <label for="confirm_password">Confirm password</label>
+    <input id="confirm_password" name="confirm_password" type="password" autocomplete="new-password" minlength="12" required>
+    <button class="button button-primary button-wide" type="submit">Create administrator <span aria-hidden="true">→</span></button>
+  </form>
+  <div class="auth-note"><span class="note-icon">!</span><span>Only the person with the installer-generated token can claim the initial admin account. Do not share the token.</span></div>
+</section>
+{% endblock %}

@@ -1,0 +1,25 @@
+[Unit]
+Description=NCAPCheck scheduled review worker
+After=network.target ncapcheck.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ncapcheck
+Group=ncapcheck
+WorkingDirectory=/opt/ncapcheck
+EnvironmentFile=/etc/ncapcheck/ncapcheck.env
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/ncapcheck/venv/bin/python -m app.worker
+Restart=on-failure
+RestartSec=5
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/ncapcheck /var/log/ncapcheck
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target

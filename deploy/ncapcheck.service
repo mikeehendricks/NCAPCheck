@@ -1,0 +1,25 @@
+[Unit]
+Description=NCAPCheck web application
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ncapcheck
+Group=ncapcheck
+WorkingDirectory=/opt/ncapcheck
+EnvironmentFile=/etc/ncapcheck/ncapcheck.env
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/ncapcheck/venv/bin/gunicorn --workers 2 --threads 4 --timeout 45 --access-logfile - --error-logfile - --bind 127.0.0.1:8000 run:app
+Restart=on-failure
+RestartSec=3
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/ncapcheck /var/log/ncapcheck
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target

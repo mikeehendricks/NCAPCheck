@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="breadcrumb"><a href="{{ url_for('main.dashboard') }}">My vehicles</a><span>›</span><span>{{ vehicle.label or 'Vehicle details' }}</span></div>
+<section class="page-heading detail-heading">
+  <div><div class="eyebrow">VEHICLE DETAILS <span class="eyebrow-line"></span> #{{ vehicle.id }}</div><h1>{{ vehicle.label or 'My vehicle' }}</h1><p class="page-subtitle">Plate <span class="inline-sensitive">{{ vehicle.plate }}</span><span class="meta-divider">·</span>MV file no. <span class="inline-sensitive">{{ vehicle.mv_number }}</span></p></div>
+  <div class="heading-actions">
+    <form method="post" action="{{ url_for('main.queue_vehicle_check', vehicle_id=vehicle.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button button-primary" type="submit">↻ Queue review</button></form>
+    <form method="post" action="{{ url_for('main.delete_vehicle', vehicle_id=vehicle.id) }}" onsubmit="return confirm('Delete this vehicle and all of its check history?')"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button button-danger-outline" type="submit">Delete</button></form>
+  </div>
+</section>
+<section class="notice notice-warning"><span class="notice-icon">!</span><div><strong>Official status is not fetched by this app</strong><p>Open each authority’s site and complete any verification there. Record what you see below; saved observations are labeled as manual reports and are not independently verified.</p></div></section>
+<section class="consolidated-card">
+  <div class="consolidated-icon">▦</div><div class="consolidated-main"><div class="stat-label">CONSOLIDATED SUMMARY</div><div class="consolidated-title">{{ status_label }}</div><p>This summary reflects your latest manual reports across the {{ providers|length }} listed portals.</p></div>
+  <span class="status-badge status-{{ status }}"><i></i>{% if status == 'violation_reported' %}Manual report{% elif status == 'clear_reported' %}Manual report{% elif status == 'partial' %}Incomplete{% else %}Action needed{% endif %}</span>
+</section>
+<section class="section-head portal-section-head"><div><h2>Authority portals</h2><p>Open a portal, check the vehicle directly, then save your observation.</p></div><span class="section-count">{{ providers|length }} sources</span></section>
+<div class="portal-list">
+  {% for provider in providers %}
+  {% set report = report_map.get(provider.key) %}
+  {% set scheduled_result = scheduled.get(provider.key) %}
+  <article class="portal-card">
+    <div class="portal-heading"><div class="portal-mark">{{ loop.index }}</div><div class="portal-title-wrap"><h3>{{ provider.name }}</h3><span>{{ provider.city }} · Manual verification</span></div><a class="portal-link" href="{{ provider.url }}" target="_blank" rel="noopener noreferrer">Open official site ↗</a></div>
+    <div class="portal-state-row">
+      <div class="portal-current"><span class="micro-label">LATEST MANUAL REPORT</span>
+        {% if report %}
+          <span class="manual-state state-{{ report.state }}"><i></i>{% if report.state == 'violation_reported' %}Violation reported{% elif report.state == 'clear_reported' %}No violation reported{% else %}Unable to verify{% endif %}</span>
+          <small>{{ report.reported_at|manila_time }} · User-reported</small>
+          {% if report.note %}<p class="report-note">{{ report.note }}</p>{% endif %}
+        {% else %}<span class="manual-state state-empty"><i></i>No manual result saved</span><small>Check the authority portal directly.</small>{% endif %}
+      </div>
+      <div class="scheduled-state"><span class="micro-label">SCHEDULED CYCLE</span>
+        {% if scheduled_result %}<span class="scheduled-label">Review required</span><small>Task created {{ scheduled_result.checked_at|manila_time }}</small>{% else %}<span class="scheduled-label muted">Not yet scheduled</span><small>Next cycle is due {{ vehicle.next_check_at|manila_time }}</small>{% endif %}
+      </div>
+    </div>
+    <details class="report-details"><summary>Record a manual observation <span>＋</span></summary>
+      <form method="post" action="{{ url_for('main.save_manual_report', vehicle_id=vehicle.id) }}" class="report-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="provider_key" value="{{ provider.key }}">
+        <label for="state-{{ provider.key }}">What did the official portal show?</label>
+        <select id="state-{{ provider.key }}" name="state" required><option value="" disabled selected>Select an observation</option><option value="clear_reported">No violation shown</option><option value="violation_reported">Violation shown</option><option value="unable_to_verify">Unable to verify / portal unavailable</option></select>
+        <label for="note-{{ provider.key }}">Private note <span class="label-hint">Optional, encrypted</span></label><input id="note-{{ provider.key }}" name="note" maxlength="500" placeholder="e.g. checked the portal on this date">
+        <button class="button button-dark button-small" type="submit">Save observation</button>
+      </form>
+    </details>
+  </article>
+  {% endfor %}
+</div>
+<div class="bottom-info"><span class="info-round">i</span><p>Official records can change. Verify any result, payment amount, or appeal deadline with the authority that issued it. NCAPCheck does not file protests or make payments.</p><span class="interval-pill">Review interval · {{ interval_hours }}h</span></div>
+{% endblock %}

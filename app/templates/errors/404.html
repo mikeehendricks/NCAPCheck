@@ -1,0 +1,2 @@
+{% extends 'base.html' %}
+{% block content %}<section class="error-state"><div class="error-code">404</div><h1>Page not found</h1><p>The page may have moved, or you may not have access to this vehicle.</p><a class="button button-primary" href="{{ url_for('main.dashboard') if current_user.is_authenticated else url_for('auth.login') }}">Return to NCAPCheck</a></section>{% endblock %}
